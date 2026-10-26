@@ -1,0 +1,21 @@
+# Secrets (the Portkey key lives in an .env file; never commit it)
+.env
+.env.*
+!.env.example
+
+# Backend
+backend/.venv/
+backend/data/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store

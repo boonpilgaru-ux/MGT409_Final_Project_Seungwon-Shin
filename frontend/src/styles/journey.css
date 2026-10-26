@@ -1,0 +1,1915 @@
+/* Journey pages: Landing, Quiz (balance game), About you, Profile.
+   All classes are prefixed `j-` so they never collide with other pages. Uses tokens from styles.css. */
+
+/* ================================================================== shared bits */
+.j-rotating {
+  display: inline-block;
+  animation: j-rise 420ms var(--ease-out) both;
+}
+@keyframes j-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.j-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.j-chips .chip {
+  white-space: normal;
+}
+
+.j-field-error {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--danger);
+}
+
+/* ================================================================== landing */
+.j-landing {
+  padding-block: var(--space-6) var(--space-7);
+}
+.j-landing__hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: center;
+}
+@media (min-width: 900px) {
+  .j-landing__hero {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: var(--space-7);
+  }
+}
+.j-landing__title {
+  margin: 0;
+  font-size: var(--text-3xl);
+  text-wrap: balance;
+}
+.j-landing__lead {
+  max-width: 56ch;
+  margin: 0;
+}
+.card.j-landing__form {
+  max-width: 520px;
+  padding: var(--space-4) var(--space-5) var(--space-4);
+  border-width: 3px;
+  box-shadow: var(--shadow-pop-lg);
+}
+/* Desktop: demo on top, steps under it. Narrow: steps come first, right below the country picker. */
+.j-landing__aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  .j-landing__aside .j-demo {
+    order: -1;
+  }
+}
+.j-landing__quick {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+.chip.j-landing__quick-chip {
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 40px;
+  padding: 6px 8px;
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+.j-landing__quick-flag {
+  font-size: 1.25em;
+  line-height: 1;
+}
+.j-landing__coming {
+  margin: 0;
+}
+@media (max-width: 400px) {
+  .j-landing__quick {
+    gap: 6px;
+  }
+  .chip.j-landing__quick-chip {
+    gap: 4px;
+    padding: 6px 4px;
+    font-size: var(--text-xs);
+  }
+}
+.chip.j-landing__quick-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.j-landing__fine {
+  margin: 0;
+}
+.card-flat.j-landing__resume {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 520px;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--ink);
+  background: var(--accent-soft);
+}
+.j-landing__resume-flag {
+  font-size: 1.8rem;
+  line-height: 1;
+}
+.j-landing__resume-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.3;
+}
+.j-landing__resume-text .muted {
+  color: var(--ink-2); /* the muted grey is 4.44:1 on accent-soft; ink-2 passes */
+}
+
+/* ---------------------------------------------------------------- country picker */
+.j-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.j-picker__control {
+  position: relative;
+}
+.j-picker__flag {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  font-size: 1.4rem;
+  line-height: 1;
+  pointer-events: none;
+}
+.input.j-picker__input {
+  min-height: 56px;
+  padding-left: 50px;
+  padding-right: 74px;
+  font-size: var(--text-lg);
+  font-weight: 700;
+}
+.j-picker__input::placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+.j-picker__clear {
+  position: absolute;
+  top: 50%;
+  right: 40px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-2);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.j-picker__clear:hover {
+  background: var(--line);
+}
+.j-picker__caret {
+  position: absolute;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  font-size: 0.9rem;
+  pointer-events: none;
+  transition: transform var(--dur) var(--ease-out);
+}
+.j-picker.is-open .j-picker__caret {
+  transform: translateY(-50%) rotate(180deg);
+}
+.j-picker__popup {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  overflow: hidden;
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop), var(--shadow-lg);
+  animation: j-rise var(--dur) var(--ease-out) both;
+}
+.j-picker__list {
+  position: relative; /* offsetParent for scroll-into-view math */
+  max-height: min(320px, 46vh);
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+}
+.j-picker__opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+.j-picker__opt.is-chosen {
+  background: var(--accent-soft);
+}
+.j-picker__opt.is-active {
+  background: var(--ink);
+  color: var(--bg);
+}
+.j-picker__opt-flag {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+.j-picker__opt-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.j-picker__mark {
+  background: transparent;
+  color: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
+}
+.j-picker__check {
+  color: var(--accent);
+  font-weight: 900;
+}
+.j-picker__opt.is-active .j-picker__check {
+  color: var(--bg);
+}
+.j-picker__opt-code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  opacity: 0.6;
+}
+.j-picker__empty {
+  margin: 0;
+  padding: var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* ---------------------------------------------------------------- hero demo duel */
+.j-demo {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  margin-inline: auto;
+  padding: var(--space-5);
+  border: 3px solid var(--ink);
+  border-radius: var(--radius-lg);
+  background:
+    radial-gradient(var(--line) 1.4px, transparent 1.6px) 0 0 / 16px 16px,
+    var(--surface);
+  box-shadow: var(--shadow-pop-lg);
+  transform: rotate(1.5deg);
+}
+.j-demo__round {
+  animation: j-rise 420ms var(--ease-out) both;
+}
+.j-demo__prompt {
+  margin: 0 0 var(--space-4);
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 1rem + 1vw, 1.75rem);
+  font-weight: var(--weight-display);
+  letter-spacing: -0.02em;
+  text-align: center;
+}
+.j-demo__duel {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.j-demo__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  aspect-ratio: 1 / 1;
+  padding: var(--space-3);
+  border: var(--border);
+  border-radius: var(--radius);
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--shadow-pop);
+}
+.j-demo__card.is-picked {
+  animation: j-pick 600ms var(--ease-pop) 1.5s both;
+}
+.j-demo__card.is-other {
+  animation: j-demo-fade 500ms var(--ease-out) 1.5s both;
+}
+@keyframes j-demo-fade {
+  to {
+    opacity: 0.3;
+    filter: grayscale(0.7);
+    transform: scale(0.95);
+  }
+}
+.j-demo__emoji {
+  font-size: clamp(2.6rem, 1.6rem + 3vw, 4rem);
+  line-height: 1;
+}
+.j-demo__label {
+  max-width: 100%;
+  font-size: clamp(0.8rem, 0.55rem + 1.2vw, 1rem);
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.j-demo__vs {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  transform: translate(-50%, -50%) rotate(-8deg);
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-weight: 900;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.j-demo__sticker {
+  position: absolute;
+  top: -16px;
+  right: -10px;
+  padding: 6px 14px;
+  transform: rotate(10deg);
+  border: var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--accent-text); /* white 14 px text needs the deeper red for 4.5:1 */
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 900;
+  box-shadow: var(--shadow-pop);
+}
+
+@media (max-width: 520px) {
+  .j-demo {
+    padding: var(--space-4);
+  }
+  .j-demo__duel {
+    gap: var(--space-3);
+  }
+  .j-demo__card {
+    padding: var(--space-2);
+  }
+  .j-demo__sticker {
+    right: 6px; /* keep the tilted sticker inside narrow viewports */
+  }
+}
+
+/* ---------------------------------------------------------------- how it works */
+.j-how {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  max-width: 460px;
+  margin-inline: auto;
+}
+.j-how__label {
+  margin: 0;
+  line-height: 1.4;
+}
+.j-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.j-steps__item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-pop);
+}
+/* the arrow sitting in the gap between two steps */
+.j-steps__item + .j-steps__item::before {
+  content: "→";
+  position: absolute;
+  top: 50%;
+  left: calc(var(--space-3) / -2 - 2px); /* half the gap + the 2px border */
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: var(--text-xs);
+  font-weight: 900;
+}
+.j-steps__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.j-steps__num {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-text);
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: 900;
+  line-height: 1;
+}
+.j-steps__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+.j-steps__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.j-steps__title {
+  font-size: var(--text-sm);
+  font-weight: 800;
+  line-height: 1.25;
+}
+.j-steps__text {
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+}
+@media (max-width: 520px) {
+  .j-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+  .j-steps__item {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+  }
+  .j-steps__item + .j-steps__item::before {
+    content: none;
+  }
+  .j-steps__title {
+    font-size: var(--text-md);
+  }
+  .j-steps__text {
+    font-size: var(--text-sm);
+  }
+}
+
+/* ================================================================== quiz */
+.j-quiz {
+  padding-top: var(--space-6);
+  overflow-x: clip; /* the slide-in transform must not flash a horizontal scrollbar */
+}
+.j-quiz__notice,
+.j-quiz__error {
+  max-width: 940px;
+  margin: 0 auto var(--space-4);
+}
+.j-quiz__notice {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  background: var(--blue-soft);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-align: center;
+}
+.card-flat.j-quiz__empty {
+  max-width: 560px;
+  margin: var(--space-6) auto;
+  padding: var(--space-7) var(--space-5);
+  align-items: center;
+}
+.j-quiz__empty p {
+  margin: 0;
+}
+.j-quiz__empty-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+.j-quiz__empty-actions {
+  display: flex;
+  justify-content: center;
+}
+.j-quiz__hint {
+  margin: var(--space-6) 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+.j-quiz__hint kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 6px;
+  border: 1.5px solid var(--ink);
+  border-bottom-width: 3px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  font-weight: 700;
+  text-align: center;
+}
+.j-quiz__hint-touch {
+  display: none;
+}
+@media (hover: none) {
+  .j-quiz__hint-touch {
+    display: inline;
+  }
+  .j-quiz__hint-keys {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- progress */
+.j-progress {
+  max-width: 940px;
+  margin: 0 auto var(--space-4);
+}
+.j-progress__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+.j-progress__round {
+  margin: 0;
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+.j-progress__round strong {
+  font-size: var(--text-xl);
+}
+.j-progress__bar {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  gap: 4px;
+}
+.j-progress__seg {
+  height: 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  background: var(--bg-2);
+  transition: background var(--dur) var(--ease-out);
+}
+.j-progress__seg--broad.is-done {
+  border-color: var(--ink);
+  background: var(--ink);
+}
+.j-progress__seg--focused.is-done {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+.j-progress__seg--specific.is-done {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.j-progress__seg.is-current {
+  border: 2px solid var(--ink);
+  background: var(--accent-soft);
+  animation: j-blink 1.1s ease-in-out infinite alternate;
+}
+@keyframes j-blink {
+  to {
+    background: var(--accent);
+  }
+}
+
+.chip.j-depth {
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.chip.j-depth--focused {
+  border-color: var(--blue);
+  background: var(--blue);
+  color: var(--blue-ink);
+}
+.chip.j-depth--specific {
+  /* white 12 px text: the deeper red keeps 5.6:1 (the hot red is 3.55:1) */
+  border-color: var(--accent-text);
+  background: var(--accent-text);
+  color: var(--accent-ink);
+}
+
+/* ---------------------------------------------------------------- round + duel */
+.j-round {
+  max-width: 940px;
+  margin-inline: auto;
+}
+.j-round--enter {
+  animation: j-round-in 460ms var(--ease-out) both;
+}
+@keyframes j-round-in {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+}
+.j-round__prompt {
+  max-width: 20ch;
+  margin: var(--space-4) auto var(--space-6);
+  font-size: clamp(1.9rem, 1.1rem + 3.2vw, 3.4rem);
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+}
+.skeleton.j-round__prompt-skel {
+  width: min(520px, 80%);
+  height: 2.6rem;
+  margin: var(--space-4) auto var(--space-6);
+  border-radius: var(--radius);
+}
+.j-round__caption {
+  min-height: 1.6em;
+  margin-top: var(--space-5);
+  color: var(--muted);
+  font-weight: 700;
+  text-align: center;
+}
+
+.j-duel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: stretch;
+  gap: var(--space-5);
+}
+
+.j-vs {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  justify-self: center;
+  width: 68px;
+  height: 68px;
+  transform: rotate(-8deg);
+  border: 3px solid var(--bg);
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  box-shadow:
+    0 0 0 3px var(--ink),
+    5px 5px 0 3px var(--accent);
+}
+
+/* ---------------------------------------------------------------- option card */
+.j-card {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  transition:
+    transform var(--dur) var(--ease-pop),
+    opacity var(--dur-slow) var(--ease-out),
+    filter var(--dur-slow) var(--ease-out);
+}
+.j-card__btn {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid var(--ink);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-pop);
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    box-shadow var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+}
+.j-card__btn:focus-visible {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-pop), var(--focus-ring);
+}
+.j-card__btn[aria-disabled="true"] {
+  cursor: default;
+}
+
+.j-card__media {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-bottom: 3px solid var(--ink);
+  /* Fallback: option color gradient + dot texture (color-mix unsupported -> flat color). */
+  background-color: var(--j-opt, var(--accent));
+  background-image:
+    radial-gradient(rgb(255 255 255 / 0.22) 1.5px, transparent 1.7px),
+    radial-gradient(
+      120% 120% at 25% 15%,
+      color-mix(in srgb, var(--j-opt, var(--accent)) 45%, #fff) 0%,
+      var(--j-opt, var(--accent)) 55%,
+      color-mix(in srgb, var(--j-opt, var(--accent)) 70%, #000) 100%
+    );
+  background-size:
+    18px 18px,
+    100% 100%;
+}
+.j-card__emoji {
+  font-size: clamp(3.5rem, 2rem + 6vw, 7rem);
+  line-height: 1;
+  filter: drop-shadow(0 6px 0 rgb(0 0 0 / 0.18));
+  user-select: none;
+  transition: transform var(--dur) var(--ease-pop);
+}
+.j-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition:
+    opacity var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+.j-card__img.is-loaded {
+  opacity: 1;
+}
+.j-card__key {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 900;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.j-card__stamp {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 4px 12px;
+  transform: rotate(8deg);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-sm);
+  background: var(--accent-text); /* white 14 px text: 5.6:1 */
+  color: #fff;
+  font-size: var(--text-sm);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  box-shadow: 2px 2px 0 var(--ink);
+  animation: j-stamp 360ms var(--ease-pop) both;
+}
+@keyframes j-stamp {
+  from {
+    opacity: 0;
+    transform: rotate(8deg) scale(1.8);
+  }
+}
+.j-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-height: 5.5em;
+  padding: var(--space-4) var(--space-5);
+}
+.j-card__label {
+  display: -webkit-box;
+  overflow: hidden;
+  /* Room for the last line's descenders (g, j, p, y) inside the clamped box, without changing
+     the card's height: line-height 1.15 is tighter than the font's ascent + descent. */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-display);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+.j-card__sub {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+/* Long labels (either card over ~38 chars, set in Quiz.tsx): a smaller font on BOTH cards so labels
+   near the 50-char limit read in full instead of ending in "…" (the line clamp stays as a
+   last-resort net). Measured with 46-50-char labels and 2-line sublabels: no clipping from 360 px
+   up; side-by-side cards are only ~230-300 px wide below 800 px. */
+.j-duel--long .j-card__label {
+  font-size: var(--text-lg);
+}
+@media (min-width: 640px) and (max-width: 799px) {
+  .j-duel--long .j-card__label {
+    font-size: var(--text-md);
+  }
+}
+
+/* Credit sits over the media square but outside the button (links can't live in buttons). */
+.j-card__overlay {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  pointer-events: none;
+}
+.j-card__credit {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  max-width: calc(100% - 20px);
+  overflow: hidden;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgb(20 20 20 / 0.62);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.6;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: auto;
+}
+a.j-card__credit:hover {
+  background: var(--ink);
+  color: #fff;
+  text-decoration: underline;
+}
+
+/* Interaction states (transforms live on the wrapper so the credit overlay moves with the card). */
+@media (hover: hover) {
+  .j-card.is-idle:hover {
+    transform: translate(-3px, -5px);
+  }
+  .j-card.is-idle:hover .j-card__btn {
+    box-shadow: 8px 9px 0 var(--ink);
+  }
+  .j-card.is-idle:hover .j-card__img {
+    transform: scale(1.04);
+  }
+  .j-card.is-idle:hover .j-card__emoji {
+    transform: scale(1.08) rotate(-4deg);
+  }
+}
+.j-card.is-idle:active {
+  transform: translate(2px, 2px);
+}
+.j-card.is-idle:active .j-card__btn {
+  box-shadow: 1px 1px 0 var(--ink);
+}
+.j-card.is-chosen {
+  z-index: 1;
+  animation: j-pick 560ms var(--ease-pop) both;
+}
+.j-card.is-chosen .j-card__btn {
+  border-color: var(--accent);
+  box-shadow: 7px 7px 0 var(--accent);
+}
+@keyframes j-pick {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.05) rotate(-1deg);
+  }
+  70% {
+    transform: scale(0.99);
+  }
+  100% {
+    transform: scale(1.02);
+  }
+}
+.j-card.is-faded {
+  opacity: 0.3;
+  filter: grayscale(0.7);
+  transform: scale(0.95);
+}
+
+/* Skeleton variant keeps identical geometry. */
+.j-card.is-skeleton .j-card__btn {
+  border-color: var(--line);
+  box-shadow: none;
+  cursor: default;
+}
+.j-card.is-skeleton .j-card__media {
+  border-radius: 0;
+  border-bottom-color: var(--line);
+  background-image: none;
+  background-color: var(--bg-2);
+}
+.j-card.is-skeleton .j-card__body {
+  align-items: center;
+}
+
+/* Laptops (1366x768, 1280x800, ...): side-by-side cards are ~412 px wide, so a square photo plus
+   the label ended below the fold whenever the prompt wrapped. On short viewports, shrink the prompt
+   and cap the duel's width from the viewport height (media stays square, SPEC section 3). */
+@media (min-width: 640px) and (max-height: 860px) {
+  .j-quiz {
+    padding-top: 12px;
+  }
+  .j-round__prompt {
+    margin: 8px auto 16px;
+    font-size: clamp(1.6rem, 0.8rem + 3.6vh, 2.8rem);
+  }
+  .j-duel {
+    width: min(100%, max(520px, calc(2 * (100svh - 380px) + 116px)));
+    margin-inline: auto;
+  }
+}
+
+/* Mobile: cards stack; each is a 5:2 row with an exact square image on the left, so both
+   options are visible without scrolling and stay identical in size. */
+@media (max-width: 639px) {
+  .j-quiz {
+    padding-top: var(--space-5);
+  }
+  .j-round__prompt {
+    margin: var(--space-2) auto var(--space-4);
+  }
+  .j-duel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .j-vs {
+    width: 50px;
+    height: 50px;
+    margin-block: -10px;
+    font-size: 1rem;
+  }
+  .j-card__btn {
+    flex-direction: row;
+    aspect-ratio: 5 / 2;
+    text-align: left;
+  }
+  .j-card__media {
+    width: auto;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    border-right: 3px solid var(--ink);
+    border-bottom: 0;
+  }
+  .j-card.is-skeleton .j-card__media {
+    border-right-color: var(--line);
+  }
+  .j-card__emoji {
+    font-size: 3rem;
+  }
+  .j-card__key {
+    top: 8px;
+    left: 8px;
+    width: 26px;
+    height: 26px;
+    font-size: var(--text-sm);
+  }
+  .j-card__stamp {
+    top: 8px;
+    right: 8px;
+    padding: 2px 8px;
+    font-size: var(--text-xs);
+  }
+  .j-card__body {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    padding: var(--space-3) var(--space-4);
+  }
+  .j-card.is-skeleton .j-card__body {
+    align-items: stretch;
+  }
+  .j-card__label {
+    font-size: var(--text-lg);
+    /* 3 lines + a 2-line sublabel still fit the 5:2 row (0 truncated labels at 360-375 px). */
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+  }
+  .j-duel--long .j-card__label {
+    font-size: var(--text-md);
+  }
+  .j-card__sub {
+    font-size: var(--text-xs);
+  }
+  .j-card__overlay {
+    width: auto;
+    height: 100%;
+  }
+  .j-card__credit {
+    bottom: 6px;
+    left: 6px;
+    max-width: calc(100% - 12px);
+    font-size: 9px;
+  }
+}
+
+/* Narrow phones (360-400 px): long labels at 14 px may use a 4th line, with tighter vertical padding,
+   so a 50-char label plus a 2-line sublabel still fits the 5:2 row. */
+@media (max-width: 400px) {
+  .j-duel--long .j-card__label {
+    font-size: var(--text-sm);
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+  .j-duel--long .j-card__body {
+    padding-block: var(--space-2);
+  }
+}
+
+/* Smallest phones (320-359 px): the text column is only ~150 px wide, so even 25-30-char labels
+   needed a 4th line at 18 px (86 of 240 real cards clipped at 320 px). 16 px, up to 4 lines and
+   tighter padding: 2 of those 240 still clip at 320 px, none at 340 px. */
+@media (max-width: 359px) {
+  .j-card__label {
+    font-size: var(--text-md);
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+  }
+  .j-card__body {
+    padding: var(--space-2) var(--space-3);
+  }
+}
+
+/* ---------------------------------------------------------------- finish + recap */
+.j-finish {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+.j-finish__burst {
+  font-size: 4.5rem;
+  line-height: 1;
+  animation: j-burst 900ms var(--ease-pop) both;
+}
+@keyframes j-burst {
+  0% {
+    transform: scale(0.2) rotate(-30deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.25) rotate(8deg);
+    opacity: 1;
+  }
+}
+.j-finish__title {
+  margin: 0;
+  font-size: var(--text-hero);
+}
+
+.j-recap__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+  margin: var(--space-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.j-recap__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 2px solid var(--ink);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.j-recap__num {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: var(--text-sm);
+  font-weight: 900;
+}
+.j-recap__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.j-recap__prompt {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.j-recap__pick {
+  font-size: var(--text-lg);
+  font-weight: 800;
+  line-height: 1.25;
+}
+.j-recap__other {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+/* ================================================================== about you */
+.j-about__head {
+  max-width: 720px;
+  margin-bottom: var(--space-6);
+}
+.j-about__head h1,
+.j-about__head p {
+  margin: 0;
+}
+.j-about__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr); /* explicit track: long no-wrap names must not widen the page */
+  gap: var(--space-6);
+  align-items: start;
+}
+@media (min-width: 960px) {
+  .j-about__grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+  .j-about__side {
+    position: sticky;
+    top: calc(var(--header-h) + var(--space-5));
+  }
+}
+.j-about__h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: var(--text-xl);
+}
+.j-about__empty {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 2px dashed var(--line);
+  border-radius: var(--radius);
+}
+.j-about__empty > span {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+.j-about__empty p {
+  margin: 0;
+}
+.j-about__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: var(--space-7);
+  padding-top: var(--space-5);
+  border-top: 2px solid var(--ink);
+}
+
+/* ---------------------------------------------------------------- composer */
+.j-compose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  transition:
+    background var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
+}
+.j-compose:focus-within {
+  border-color: var(--blue);
+}
+.j-compose.is-over {
+  border-color: var(--blue);
+  border-style: dashed;
+  background: var(--blue-soft);
+}
+.j-compose__text {
+  width: 100%;
+  min-height: 140px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+}
+.j-compose__text::placeholder {
+  color: var(--muted);
+}
+.j-compose__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.j-compose__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 6px 4px 10px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  background: var(--bg);
+  font-size: var(--text-sm);
+  animation: j-rise var(--dur) var(--ease-out) both;
+}
+.j-compose__chip--link {
+  padding-right: 10px;
+  border-style: dashed;
+}
+.j-compose__chip-name {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.j-compose__chip-x {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.j-compose__chip-x:hover:not(:disabled) {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.j-compose__chip-x:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.j-compose__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1.5px solid var(--line);
+}
+.j-compose__hint {
+  flex: 1;
+  min-width: 0;
+}
+.j-compose__send {
+  margin-left: auto;
+  min-width: 96px;
+}
+@media (max-width: 480px) {
+  .j-compose__hint {
+    order: 3;
+    flex-basis: 100%;
+  }
+}
+.j-about__privacy {
+  margin: 0;
+}
+
+.j-notes {
+  margin: 0;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-6);
+  border-radius: var(--radius);
+  background: var(--warning-soft);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.icon-btn.j-ctx__remove {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-width: 1.5px;
+  color: var(--ink);
+  font-size: 1.15rem;
+  line-height: 1;
+  transition:
+    background var(--dur-fast),
+    color var(--dur-fast),
+    border-color var(--dur-fast);
+}
+.icon-btn.j-ctx__remove:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.icon-btn.j-ctx__remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------- context items */
+.j-ctx-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.j-ctx {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border: 2px solid var(--ink);
+  border-left-width: 6px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  animation: slide-up var(--dur-slow) var(--ease-out) both;
+  transition: opacity var(--dur);
+}
+.j-ctx.is-ok {
+  border-left-color: var(--success);
+}
+.j-ctx.is-limited {
+  border-left-color: var(--warning);
+}
+.j-ctx.is-error {
+  border-left-color: var(--danger);
+}
+.j-ctx.is-pending {
+  border-style: dashed;
+  border-color: var(--line);
+}
+.j-ctx.is-removing {
+  opacity: 0.5;
+}
+.j-ctx__icon {
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+.j-ctx__main {
+  flex: 1;
+  min-width: 0;
+}
+.j-ctx__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.j-ctx__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.chip.j-ctx__badge {
+  padding: 1px 10px;
+  font-size: var(--text-xs);
+}
+.j-ctx__summary {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  overflow-wrap: anywhere; /* long @handles and URLs */
+}
+.j-ctx__error {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--danger);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+.j-ctx__meta {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+/* ================================================================== profile */
+.j-profile__banner {
+  margin-bottom: var(--space-5);
+}
+.card.j-reveal {
+  padding: 0;
+  overflow: hidden;
+  border-width: 3px;
+  box-shadow: var(--shadow-pop-lg);
+}
+.j-reveal__stripe {
+  display: flex;
+  height: 18px;
+  border-bottom: 3px solid var(--ink);
+}
+.j-reveal__stripe span {
+  flex: 1;
+}
+.j-reveal__body {
+  padding: clamp(24px, 5vw, 56px);
+}
+.j-reveal__archetype {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: clamp(2.4rem, 1.4rem + 5vw, 5rem);
+  text-wrap: balance;
+}
+.j-reveal__tagline {
+  margin-bottom: var(--space-4);
+  color: var(--accent);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  line-height: 1.3;
+}
+/* "Next" CTAs right under the title, so the page's purpose is obvious at a glance */
+.j-reveal__next {
+  max-width: 760px;
+  margin: 0 0 var(--space-5);
+  padding: var(--space-4);
+  border: 2px dashed var(--ink);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.j-reveal__next-lead {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+.j-reveal__next-ctas {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.btn.j-reveal__cta {
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  font-size: var(--text-lg);
+  white-space: normal;
+  text-align: center;
+}
+.j-reveal__cta-icon {
+  font-size: 1.5em;
+  line-height: 1;
+}
+@media (max-width: 560px) {
+  .j-reveal__next-ctas {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.j-reveal__summary {
+  max-width: 68ch;
+  color: var(--ink-2);
+  font-size: var(--text-lg);
+}
+
+.j-profile__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .j-profile__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.j-panel__h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: var(--space-4);
+  font-size: var(--text-xl);
+}
+.j-panel__text {
+  color: var(--ink-2);
+}
+.j-panel__text:last-child {
+  margin-bottom: 0;
+}
+
+/* traits */
+.j-traits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.j-trait__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: 6px;
+}
+.j-trait__name {
+  font-weight: 800;
+}
+.j-trait__score {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+.j-trait__track {
+  position: relative;
+  height: 14px;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--bg-2);
+}
+.j-trait__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--score);
+  border-right: 2px solid var(--ink);
+  background: linear-gradient(90deg, var(--blue), var(--accent));
+  animation: j-grow 1s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms + 150ms);
+}
+@keyframes j-grow {
+  from {
+    width: 0;
+  }
+}
+.j-trait__ends {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+.j-trait__ends span:last-child {
+  text-align: right;
+}
+.j-trait__ends .is-strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+.j-trait__desc {
+  margin: 6px 0 0;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+/* taste */
+.j-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+.j-swatch {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  animation: pop-in var(--dur-slow) var(--ease-pop) both;
+  animation-delay: calc(var(--i, 0) * 70ms + 200ms);
+}
+.j-swatch .swatch {
+  width: 100%;
+  height: 56px;
+  border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+.j-swatch__name {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.j-swatch__hex {
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+}
+.j-taste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+}
+.j-taste dt {
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.j-taste dd {
+  margin: 0;
+}
+.j-taste__text {
+  color: var(--ink-2);
+}
+.chip.j-chip-avoid {
+  border-color: var(--line);
+  background: var(--bg);
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+}
+
+/* values */
+.j-values {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: j-value;
+}
+.j-values li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  line-height: 1.3;
+  counter-increment: j-value;
+}
+.j-values li::before {
+  content: counter(j-value, decimal-leading-zero);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 800;
+}
+
+/* brief + CTAs */
+.j-brief {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: center;
+  padding: clamp(24px, 4vw, 48px);
+  border-radius: var(--radius-lg);
+  background: var(--ink);
+  color: var(--bg);
+  box-shadow: 7px 7px 0 var(--accent);
+}
+@media (min-width: 900px) {
+  .j-brief {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+.j-brief__body {
+  margin: 0;
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.4;
+}
+.j-brief__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+.j-brief .btn {
+  border-color: var(--bg);
+  box-shadow: 4px 4px 0 var(--bg);
+}
+/* On the ink band the hot red reads better than the deeper red text tone (5.2:1 vs 3.27:1). */
+.j-brief .eyebrow {
+  color: var(--accent);
+}
+.j-brief .btn:hover {
+  box-shadow: 5px 5px 0 var(--bg);
+}
+.j-profile__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+/* failure state */
+.card.j-profile__failed {
+  align-items: center;
+  padding: var(--space-7) var(--space-5);
+}
+.j-profile__failed h1,
+.j-profile__failed p {
+  margin: 0;
+}
+.j-profile__failed-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+.j-profile__failed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+/* ---------------------------------------------------------------- profile loader */
+.card.j-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 560px;
+  margin: var(--space-6) auto;
+  padding: var(--space-7) var(--space-5);
+  text-align: center;
+}
+.j-loader .eyebrow {
+  margin: 0;
+}
+.j-loader__line {
+  display: grid;
+  place-items: center;
+  min-height: 2.6em;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-display);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.j-loader__bar {
+  width: 100%;
+  max-width: 360px;
+  height: 12px;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  background: var(--bg-2);
+}
+.j-loader__bar span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+  transition: width 1s linear;
+}
+.j-loader p {
+  margin: 0;
+}
+
+.j-tee {
+  width: 120px;
+  height: 110px;
+  overflow: visible;
+  animation: j-bob 1.6s ease-in-out infinite;
+}
+.j-tee__body {
+  fill: var(--accent);
+  stroke: var(--ink);
+  stroke-width: 4;
+  stroke-linejoin: round;
+  animation: j-tee-color 4.8s steps(1, end) infinite;
+}
+.j-tee__dot {
+  fill: var(--bg);
+  stroke: var(--ink);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: j-dot 1.6s ease-in-out infinite;
+}
+@keyframes j-bob {
+  50% {
+    transform: translateY(-8px) rotate(-3deg);
+  }
+}
+@keyframes j-tee-color {
+  0% {
+    fill: var(--accent);
+  }
+  25% {
+    fill: var(--blue);
+  }
+  50% {
+    fill: #ffd60a;
+  }
+  75% {
+    fill: var(--success);
+  }
+}
+@keyframes j-dot {
+  50% {
+    transform: scale(0.7);
+  }
+}
+
+.j-usage {
+  display: grid;
+  grid-template-columns: minmax(12rem, 1fr) 2fr;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+.j-usage .eyebrow, .j-usage .tiny { margin: 0; }
+.j-usage__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+.j-usage__stats dt { color: var(--muted); font-size: var(--text-xs); }
+.j-usage__stats dd { margin: 0.2rem 0 0; font-weight: var(--weight-display); font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) {
+  .j-usage { grid-template-columns: 1fr; }
+  .j-usage__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* About you: "See my profile" sits next to the heading so the next step is visible right away. */
+.j-about__head--split {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4, 1rem);
+  flex-wrap: wrap;
+}
+.j-about__head--split > .stack-sm { flex: 1 1 28rem; min-width: 0; }
+.j-about__top-cta { flex: 0 0 auto; white-space: nowrap; }
+@media (max-width: 560px) {
+  .j-about__top-cta { width: 100%; }
+}
